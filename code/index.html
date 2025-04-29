@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Lexend+Deca:wght@100..900&family=Outfit:wght@100..900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <title>MSCNN</title>
+</head>
+<body>
+    <header id="header">
+        <span id="headerText">Multilingual Sentiment Classification via Neural Networks</span>
+        <a id="headerGithub" href="https://github.com/winkelee">GitHub</a>
+    </header>
+    <div id="mainContent">
+        <div id="sourceTextArea">
+            <textarea id="sourceText" placeholder="Enter text here..." spellcheck="false"></textarea>
+            <span id="tokenCount"></span>
+            <span id="tokenWarning"></span>
+        </div>
+        <div id="classifyButton">Classify!</div>
+        <div id="predictedInfo">
+            <div id="predictedStats"></div>
+        </div>
+    </div>
+    <footer>
+        <span id="footerCredentials">Made by github.com/winkelee</span>
+        <span id="footerDescription">For the demonstration of multilingual sentiment classfication in text</span>
+    </footer>
+</body>
+<script src="script.js"></script>
+</html>
