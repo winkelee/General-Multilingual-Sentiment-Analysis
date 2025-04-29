@@ -148,7 +148,7 @@ def load_models():
         model_language = joblib.load(MODEL_LANGUAGE_PATH)
         print(f"Loading translation model: {model_name}")
         tokenizer = AutoTokenizer.from_pretrained(model_name)
-        model = AutoModelForSeq2SeqLM.from_pretrained(model_name)
+        model = AutoModelForSeq2SeqLM.from_pretrained(model_name).to(device)
         print(f"Loading count vectorizer: {COUNT_VECTORIZER_PATH}")
         count_vectorizer = joblib.load(COUNT_VECTORIZER_PATH)
         print(f"Loading toxic count vectorizer: {TOXIC_COUNT_VECTORIZER_PATH}")
@@ -174,7 +174,7 @@ def translate(text, source_lang_code, target_lang_code, tokenizer, model):
     else:
         langcode_nllb = iso_to_nllb[source_lang_code]
     tokenizer.src_lang = langcode_nllb
-    encoded = tokenizer(text, return_tensors='pt')
+    encoded = tokenizer(text, return_tensors='pt').to(device)
     generated_tokens = model.generate(**encoded, forced_bos_token_id=tokenizer.convert_tokens_to_ids(target_lang_code), max_new_tokens=800, do_sample=False, num_beams=3)
     return tokenizer.batch_decode(generated_tokens, skip_special_tokens=True)[0]
 
