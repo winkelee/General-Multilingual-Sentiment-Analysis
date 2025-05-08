@@ -21,6 +21,7 @@ A modular python-based program that fulfills the role of analyzing user input ac
     - **RNN with GRUs** - Naive Sentiment classification
     - **Word2Vec BoW model by Omer Levy and Yoav Goldberg** - Word embedding, [link](https://levyomer.wordpress.com/2014/04/25/dependency-based-word-embeddings/)
     - **Facebook's nllb-200-distilled-600M** - Language translation, [link](https://huggingface.co/facebook/nllb-200-distilled-600M)
+    - **Facebook's m2m100-418M** - Language translation (lightweight), [link](https://huggingface.co/facebook/m2m100_418M)
 
 ## Disclaimer
 This project is a PoC, an experimental version of how things can look. This is not intended for production use as of right now and there are parts of this system that can be improved upon to make this more reliable.
