@@ -18,6 +18,7 @@ import unicodedata
 
 #model_name = "facebook/m2m100_418M"
 model_name = "facebook/nllb-200-distilled-600M"
+model_name = ""
 import nltk
 nltk.download('punkt_tab')
 
@@ -133,7 +134,7 @@ class InputText(BaseModel):
     source_text: str
 
 def load_models():
-    global model, model_language, model_sentiment, tokenizer, token_to_id, tokens, count_vectorizer, token_to_id_toxic, tokens_toxic, toxic_count_vectorizer, model_toxic
+    global model, model_language, model_sentiment, tokenizer, token_to_id, tokens, count_vectorizer, token_to_id_toxic, tokens_toxic, toxic_count_vectorizer, model_toxic, model_type
     try:
         print(f"Loading tokenizer data: {TOKENIZER_DATA_PATH}")
         tokens, token_to_id = load_tokenizer_data(TOKENIZER_DATA_PATH)
@@ -146,6 +147,14 @@ def load_models():
         model_sentiment.eval()
         print(f"Loading language classification model from: {MODEL_LANGUAGE_PATH}")
         model_language = joblib.load(MODEL_LANGUAGE_PATH)
+        while True:
+            model_type = str(input("Choose translation model: light/heavy (l or h): "))
+            if model_type == "l":
+                model_name = "facebook/m2m100_418M"
+                break
+            elif model_type == 'h':
+                model_name = "facebook/nllb-200-distilled-600M"
+                break
         print(f"Loading translation model: {model_name}")
         tokenizer = AutoTokenizer.from_pretrained(model_name)
         model = AutoModelForSeq2SeqLM.from_pretrained(model_name).to(device)
@@ -164,18 +173,26 @@ def load_models():
         model_sentiment = None
         model_toxic = None
 
-def translate(text, source_lang_code, target_lang_code, tokenizer, model):
-    if source_lang_code == 'sr':
-        type = detect_serbian_script(text)
-        if type == 'cyrillic':
-            langcode_nllb = 'srp_Cyrl'
+def translate(text, source_lang_code, target_lang_code, tokenizer, model, model_type):
+    if model_type == 'h':
+        target_lang_code = 'eng_Latn'
+        if source_lang_code == 'sr':
+            type = detect_serbian_script(text)
+            if type == 'cyrillic':
+                langcode_nllb = 'srp_Cyrl'
+            else:
+                langcode_nllb = 'srp_Latn'
         else:
-            langcode_nllb = 'srp_Latn'
+            langcode_nllb = iso_to_nllb[source_lang_code]
     else:
-        langcode_nllb = iso_to_nllb[source_lang_code]
+        langcode_nllb = source_lang_code
+        target_lang_code = 'en'
     tokenizer.src_lang = langcode_nllb
     encoded = tokenizer(text, return_tensors='pt').to(device)
-    generated_tokens = model.generate(**encoded, forced_bos_token_id=tokenizer.convert_tokens_to_ids(target_lang_code), max_new_tokens=800, do_sample=False, num_beams=3)
+    if model_type == 'h':
+        generated_tokens = model.generate(**encoded, forced_bos_token_id=tokenizer.convert_tokens_to_ids(target_lang_code), max_new_tokens=800, do_sample=False, num_beams=3)
+    else:
+        generated_tokens = model.generate(**encoded, forced_bos_token_id=tokenizer.get_lang_id(target_lang_code), max_new_tokens=800, do_sample=False, num_beams=3)
     return tokenizer.batch_decode(generated_tokens, skip_special_tokens=True)[0]
 
 def detect_serbian_script(text):
@@ -233,7 +250,7 @@ def full_prediction_pipeline(input):
             language_code_sentence = langcodes.find(prediction_sentence[0]).language
             if language_code_sentence != 'en':
                 translation_needed = True
-                translated_input_sentence = translate(clean_sentence, language_code_sentence, 'eng_Latn', tokenizer, model)
+                translated_input_sentence = translate(clean_sentence, language_code_sentence, 'en', tokenizer, model, model_type)
                 print("Inference translated sentence: ", translated_input_sentence)
             else:
                 translated_input_sentence = clean_sentence
@@ -292,8 +309,9 @@ def models_warm_up():
         prediction_sample_input = model_language.predict(prediction_sample_input)
         print("Sample language prediction: ", prediction_sample_input)
         sample_language_code = langcodes.find(prediction_sample_input[0]).language
+
         print("Predicted language code: ", iso_to_nllb[sample_language_code])
-        translated_input = translate(clean_sample_input, sample_language_code, 'eng_Latn', tokenizer, model)
+        translated_input = translate(clean_sample_input, sample_language_code, 'en', tokenizer, model, model_type)
         print("Translated sample input: ", translated_input)
         clean_translated_sample_input = clean_input(translated_input)
         encoded_sample_input = encode_text(clean_translated_sample_input, token_to_id)
